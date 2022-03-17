@@ -11,19 +11,14 @@ import numpy as np
 
 def distance(str1, str2):
     """Simple Levenshtein implementation for evalm."""
-    m = np.zeros([len(str2) + 1, len(str1) + 1])
-    for x in range(1, len(str2) + 1):
-        m[x][0] = m[x - 1][0] + 1
-    for y in range(1, len(str1) + 1):
-        m[0][y] = m[0][y - 1] + 1
+    m = np.zeros([len(str2) + 1, len(str1) + 1], dtype=int)
+    m[:, 0] = np.arange(len(str2) + 1)
+    m[0, :] = np.arange(len(str1) + 1)
     for x in range(1, len(str2) + 1):
         for y in range(1, len(str1) + 1):
-            if str1[y - 1] == str2[x - 1]:
-                dg = 0
-            else:
-                dg = 1
-            m[x][y] = min(m[x - 1][y] + 1, m[x][y - 1] + 1, m[x - 1][y - 1] + dg)
-    return int(m[len(str2)][len(str1)])
+            dg = int(str1[y - 1] != str2[x - 1])
+            m[x, y] = min(m[x - 1, y] + 1, m[x, y - 1] + 1, m[x - 1, y - 1] + dg)
+    return m[len(str2), len(str1)]
 
 def read(fname, flag):
     """ read file name """
@@ -66,22 +61,22 @@ def eval_form(gold, guess, category):
         cat = "all"
         if lemma in category:
             cat = category[lemma]
-        if (cat in total) is False:
+        if cat not in total:
             total[cat] = .0
         if lemma in guess:
             str2 = guess[lemma]
             gold_set = set(str1.split('|'))
             guess_list = str2.split('|')
-            if (cat in total_g) is False:
+            if cat not in total_g:
                 total_g[cat] = .0
-            if (cat in total_m) is False:
+            if cat not in total_m:
                 total_m[cat] = .0
             total_g[cat] += len(str2.split('|'))
             total_m[cat] += len(str1.split('|'))
 
         for b in guess_list:
             if b in gold_set:
-                if (cat in tp) is False:
+                if cat not in tp:
                     tp[cat] = .0
                 tp[cat] += 1
         dist[cat] += distance(str1, str2)
